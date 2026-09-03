@@ -1,6 +1,6 @@
 {
-  "name": "flutter-reference",
-  "displayName": "Flutter Reference",
+  "name": "flutter-reference-lens",
+  "displayName": "Flutter Reference Lens",
   "description": "Semantic usage and implementation CodeLens for Dart and Flutter.",
   "version": "1.0.0",
   "publisher": "trancongtien",

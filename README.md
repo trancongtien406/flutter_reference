@@ -1,4 +1,4 @@
-# Flutter Reference
+# Flutter Reference Lens
 
 Flutter Reference adds semantic usage and implementation CodeLens to Dart and Flutter files in VS Code.
 

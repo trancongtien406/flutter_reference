@@ -105,7 +105,7 @@ export function activate(context: vscode.ExtensionContext): void {
       void vscode.window.showInformationMessage("Flutter Reference cache cleared.");
     }),
     vscode.commands.registerCommand("flutterReference.openSettings", async () => {
-      await vscode.commands.executeCommand("workbench.action.openSettings", "@ext:trancongtien.flutter-reference");
+      await vscode.commands.executeCommand("workbench.action.openSettings", "@ext:trancongtien.flutter-reference-lens");
     }),
     vscode.commands.registerCommand("flutterReference.showReferences", showLocations),
     vscode.commands.registerCommand("flutterReference.showImplementations", showLocations),
