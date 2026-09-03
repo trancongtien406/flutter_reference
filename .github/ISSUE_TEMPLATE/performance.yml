@@ -1,0 +1,20 @@
+name: Performance issue
+description: Report slow resolution, CPU, memory, or editor jank.
+title: "[Performance]: "
+labels: [performance]
+body:
+  - type: input
+    id: size
+    attributes: { label: Approximate Dart file count and largest file }
+    validations: { required: true }
+  - type: input
+    id: layout
+    attributes: { label: Workspace layout, generated code, Melos/monorepo }
+  - type: textarea
+    id: behavior
+    attributes: { label: When slowdown occurs and observed CPU/memory behavior }
+    validations: { required: true }
+  - type: textarea
+    id: diagnostics
+    attributes: { label: Flutter Reference diagnostics }
+    validations: { required: true }

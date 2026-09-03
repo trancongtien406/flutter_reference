@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+integration-dist/
+*.vsix
+*.log
+.DS_Store
+.dart_tool/
+.vscode-test/

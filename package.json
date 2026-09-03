@@ -1,0 +1,270 @@
+{
+  "name": "flutter-reference",
+  "displayName": "Flutter Reference",
+  "description": "Semantic usage and implementation CodeLens for Dart and Flutter.",
+  "version": "1.0.0",
+  "publisher": "flutter-reference",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "pricing": "Free",
+  "galleryBanner": {
+    "color": "#07122f",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "dart",
+    "flutter",
+    "references",
+    "usages",
+    "codelens",
+    "productivity",
+    "navigation"
+  ],
+  "activationEvents": [
+    "onLanguage:dart"
+  ],
+  "main": "./dist/extension.js",
+  "extensionDependencies": [
+    "Dart-Code.dart-code"
+  ],
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -p . --watch",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:integration": "npm run compile:integration && node integration-dist/runTest.js",
+    "compile:integration": "tsc -p tsconfig.integration.json",
+    "test:coverage": "vitest run --coverage",
+    "check": "npm run format:check && npm run lint && npm run compile && npm test",
+    "package": "npm run check && vsce package --no-dependencies --allow-missing-repository",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.18.0",
+    "@types/vscode": "^1.90.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.6.0",
+    "eslint": "^9.35.0",
+    "glob": "^11.0.3",
+    "mocha": "^12.0.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0",
+    "vitest": "^3.2.4"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "flutterReference.enable",
+        "title": "Enable",
+        "category": "Flutter Reference"
+      },
+      {
+        "command": "flutterReference.disable",
+        "title": "Disable",
+        "category": "Flutter Reference"
+      },
+      {
+        "command": "flutterReference.refresh",
+        "title": "Refresh Current File",
+        "category": "Flutter Reference"
+      },
+      {
+        "command": "flutterReference.clearCache",
+        "title": "Clear Cache",
+        "category": "Flutter Reference"
+      },
+      {
+        "command": "flutterReference.openSettings",
+        "title": "Open Settings",
+        "category": "Flutter Reference"
+      },
+      {
+        "command": "flutterReference.showDiagnostics",
+        "title": "Show Diagnostics",
+        "category": "Flutter Reference"
+      },
+      {
+        "command": "flutterReference.analyzeChangeImpact",
+        "title": "Analyze Change Impact",
+        "category": "Flutter Reference",
+        "enablement": "editorLangId == dart"
+      },
+      {
+        "command": "flutterReference.showDependencyGraph",
+        "title": "Show Dependency Graph",
+        "category": "Flutter Reference",
+        "enablement": "editorLangId == dart"
+      },
+      {
+        "command": "flutterReference.showCallers",
+        "title": "Show Callers",
+        "category": "Flutter Reference",
+        "enablement": "editorLangId == dart"
+      },
+      {
+        "command": "flutterReference.showCallees",
+        "title": "Show Callees",
+        "category": "Flutter Reference",
+        "enablement": "editorLangId == dart"
+      },
+      {
+        "command": "flutterReference.showReferences",
+        "title": "Show References",
+        "category": "Flutter Reference",
+        "enablement": "editorLangId == dart"
+      },
+      {
+        "command": "flutterReference.showImplementations",
+        "title": "Show Implementations",
+        "category": "Flutter Reference",
+        "enablement": "editorLangId == dart"
+      }
+    ],
+    "configuration": {
+      "title": "Flutter Reference",
+      "properties": {
+        "flutterReference.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "Show Flutter Reference CodeLens in Dart files."
+        },
+        "flutterReference.showClasses": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "flutterReference.showConstructors": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "flutterReference.showMethods": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "flutterReference.showFunctions": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "flutterReference.showFields": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource"
+        },
+        "flutterReference.showGettersSetters": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "flutterReference.showVariables": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource"
+        },
+        "flutterReference.showEnums": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "flutterReference.showEnumMembers": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource"
+        },
+        "flutterReference.showExtensions": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Show CodeLens for symbols reported by Dart as interfaces (including extensions/mixins where supported)."
+        },
+        "flutterReference.showZeroUsages": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "flutterReference.showImplementations": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "flutterReference.showCallHierarchy": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Show caller/callee CodeLens when Dart provides call hierarchy data."
+        },
+        "flutterReference.showReferenceHeat": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Append a high-impact hint when a usage count reaches the configured threshold."
+        },
+        "flutterReference.referenceHeatThreshold": {
+          "type": "integer",
+          "default": 50,
+          "minimum": 5,
+          "maximum": 10000,
+          "scope": "resource"
+        },
+        "flutterReference.showGitContext": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Append local git blame age to usage CodeLens. Disabled by default to avoid spawning git during normal editing."
+        },
+        "flutterReference.excludeGeneratedFiles": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "flutterReference.cache.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window"
+        },
+        "flutterReference.performance.maxConcurrentQueries": {
+          "type": "integer",
+          "default": 4,
+          "minimum": 1,
+          "maximum": 16,
+          "scope": "window"
+        },
+        "flutterReference.performance.refreshDebounceMs": {
+          "type": "integer",
+          "default": 500,
+          "minimum": 100,
+          "maximum": 5000,
+          "scope": "window"
+        },
+        "flutterReference.analysis.maxGraphNodes": {
+          "type": "integer",
+          "default": 100,
+          "minimum": 10,
+          "maximum": 500,
+          "scope": "window"
+        },
+        "flutterReference.debugLogging": {
+          "type": "boolean",
+          "default": false,
+          "scope": "window"
+        }
+      }
+    }
+  }
+}

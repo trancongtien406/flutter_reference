@@ -1,0 +1,23 @@
+name: Bug report
+description: Report an incorrect count, navigation issue, or extension failure.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: VS Code, Flutter Reference, Dart-Code, Flutter and Dart versions.
+    validations: { required: true }
+  - type: input
+    id: os
+    attributes: { label: OS and architecture }
+    validations: { required: true }
+  - type: textarea
+    id: workspace
+    attributes: { label: Workspace type, expected behavior, and actual behavior }
+    validations: { required: true }
+  - type: textarea
+    id: example
+    attributes: { label: Minimal Dart example and diagnostics output }
+    validations: { required: true }
