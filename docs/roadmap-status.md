@@ -22,10 +22,9 @@ Status as of 2026-09-03. “Implemented” means source and automated checks exi
 
 ## External actions still required
 
-1. Choose and create the final Marketplace publisher ID.
-2. Provide the final Git repository URL and push the project so the three-OS workflow can run.
-3. Add Marketplace credentials as `VSCE_PAT` or configure Microsoft Entra publishing.
-4. Capture truthful GIF/screenshots from the owner’s chosen theme and project.
-5. Dogfood on a production Flutter project and record the 500/1,000/3,000-file measurements.
+1. Confirm the pushed GitHub Actions matrix passes on all three operating systems.
+2. Add Marketplace credentials as `VSCE_PAT` or configure Microsoft Entra publishing.
+3. Capture truthful GIF/screenshots from the owner’s chosen theme and project.
+4. Dogfood on a production Flutter project and record the 500/1,000/3,000-file measurements.
 
 No source feature is represented as platform-verified or published before those actions happen.

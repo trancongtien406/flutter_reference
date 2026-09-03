@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 
 describe("Flutter Reference extension", () => {
   it("activates and discovers semantic Dart symbols", async () => {
-    const extension = vscode.extensions.getExtension("flutter-reference.flutter-reference");
+    const extension = vscode.extensions.getExtension("trancongtien.flutter-reference");
     assert.ok(extension, "Extension was not discovered by the host.");
     await extension.activate();
     assert.equal(extension.isActive, true);

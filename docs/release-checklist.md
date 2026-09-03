@@ -8,5 +8,6 @@
 - [ ] Verify macOS, Windows, and Linux.
 - [ ] Verify monorepo, Melos, nested packages, and symlinks.
 - [x] Add Marketplace icon and privacy documentation.
-- [ ] Add owner-provided Marketplace publisher/repository/bugs URLs and screenshots/GIF.
+- [x] Add Marketplace publisher, repository, bugs, and homepage metadata.
+- [ ] Add screenshots/GIF.
 - [ ] Publish from a signed/tagged release only.
