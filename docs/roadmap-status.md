@@ -20,6 +20,22 @@ Status as of 2026-09-03. “Implemented” means source and automated checks exi
 | 13 Hardening                | Automation complete; external matrix pending | macOS ARM64 verified; CI covers Linux/macOS/Windows after push                    |
 | 14 Advanced                 | Implemented                                  | Heat, impact, modules, test relationship, Git age, call graph                     |
 
+## Roadmap v2: AI-agent intelligence
+
+| Phase                   | Status                | Evidence                                                                                                                                                                                          |
+| ----------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A0 Core extraction      | In progress           | VS Code-independent contracts, source classification, semantic port, delete-safety policy, and graph algorithms added under `src/intelligence`; semantic provider adapters still use VS Code APIs |
+| A1 Agent primitives     | In progress           | Structured contracts and authenticated local IPC transport are implemented; semantic method dispatch is pending                                                                                   |
+| A2 MCP v0.1             | In progress           | Extension lifecycle now owns a versioned local bridge; MCP stdio adapter and semantic method dispatch remain pending                                                                               |
+| A3 Context intelligence | Partially implemented | `Copy AI Context` returns references, implementations, modules, generated relationships, and related tests locally                                                                                |
+| A4 Verification         | Pending               | Requires explicit analyzer and related-test execution scopes                                                                                                                                      |
+| A5 Symbol graph         | In progress           | Typed edges, reachability, Tarjan SCC, and dead-cluster detection are unit-tested; workspace indexing is pending                                                                                  |
+| A6 Dead-code clusters   | In progress           | Core graph algorithm exists; application-root and framework adapters are pending                                                                                                                  |
+| A7 Framework rules      | In progress           | Conservative Flutter lifecycle, entry-point pragma, and MethodChannel risk signals exist                                                                                                          |
+| A8 CLI + CI             | Pending               | No grep-based substitute will be shipped as semantic analysis                                                                                                                                     |
+| A9 Safe Delete UX       | In progress           | Read-only `Analyze Delete Safety` evidence report exists; no automatic deletion                                                                                                                   |
+| A10 Agentic refactor    | Pending               | Intentionally blocked until analysis and verification are production-proven                                                                                                                       |
+
 ## External actions still required
 
 1. Confirm the pushed GitHub Actions matrix passes on all three operating systems.

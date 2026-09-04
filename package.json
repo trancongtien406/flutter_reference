@@ -2,7 +2,7 @@
   "name": "flutter-reference-lens",
   "displayName": "Flutter Reference Lens",
   "description": "Semantic usage and implementation CodeLens for Dart and Flutter.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "trancongtien",
   "license": "MIT",
   "repository": {
@@ -107,6 +107,18 @@
       {
         "command": "flutterReference.analyzeChangeImpact",
         "title": "Analyze Change Impact",
+        "category": "Flutter Reference",
+        "enablement": "editorLangId == dart"
+      },
+      {
+        "command": "flutterReference.analyzeDeleteSafety",
+        "title": "Analyze Delete Safety",
+        "category": "Flutter Reference",
+        "enablement": "editorLangId == dart"
+      },
+      {
+        "command": "flutterReference.copyAiContext",
+        "title": "Copy AI Context",
         "category": "Flutter Reference",
         "enablement": "editorLangId == dart"
       },

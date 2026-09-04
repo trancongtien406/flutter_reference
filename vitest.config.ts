@@ -11,7 +11,10 @@ export default defineConfig({
         "src/analysis/impact.ts",
         "src/cache/referenceCache.ts",
         "src/core/location.ts",
-        "src/core/queryQueue.ts"
+        "src/core/queryQueue.ts",
+        "src/intelligence/graph.ts",
+        "src/intelligence/classification.ts",
+        "src/intelligence/safety.ts"
       ],
       thresholds: { lines: 80, functions: 80, branches: 75, statements: 80 }
     }

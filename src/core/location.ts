@@ -1,7 +1,5 @@
 import * as vscode from "vscode";
-
-export const GENERATED_FILE_PATTERN = /(?:\.g|\.freezed|\.gr|\.mocks)\.dart$/i;
-export const TEST_PATH_PATTERN = /(?:^|\/)(?:test|integration_test)(?:\/|$)/i;
+import { classifySourcePath, SourceClassification } from "../intelligence/classification";
 
 export function locationKey(location: vscode.Location): string {
   const range = location.range;
@@ -13,11 +11,8 @@ export function isDeclaration(location: vscode.Location, declaration: vscode.Loc
   return location.range.contains(declaration.range.start) || declaration.range.contains(location.range.start);
 }
 
-export function classifyUri(uri: vscode.Uri): "production" | "test" | "generated" {
-  const normalizedPath = uri.path.replaceAll("\\", "/");
-  if (GENERATED_FILE_PATTERN.test(normalizedPath)) return "generated";
-  if (TEST_PATH_PATTERN.test(normalizedPath)) return "test";
-  return "production";
+export function classifyUri(uri: vscode.Uri): SourceClassification {
+  return classifySourcePath(uri.path);
 }
 
 export function usageLabel(production: number, tests: number, generated: number): string {

@@ -31,10 +31,12 @@ Counts come from the Dart language service through VS Code's semantic providers.
 - Diagnostics report without source content.
 - Change-impact reports, affected-module analysis, and a local dependency graph.
 - Optional reference heat and local Git blame age hints.
+- Evidence-based delete-safety reports that never equate zero usages with safe deletion.
+- Copy AI Context for compact semantic references, implementations, modules, and related tests.
 
 ## Commands
 
-Open the Command Palette and search for `Flutter Reference` to enable/disable, refresh, clear the cache, inspect callers/callees, analyze change impact, display a dependency graph, open settings, or show diagnostics.
+Open the Command Palette and search for `Flutter Reference` to enable/disable, refresh, clear the cache, inspect callers/callees, analyze change impact or delete safety, copy semantic AI context, display a dependency graph, open settings, or show diagnostics.
 
 ## Settings
 

@@ -1,5 +1,8 @@
 import * as os from "node:os";
+import * as path from "node:path";
 import * as vscode from "vscode";
+import { AgentBridgeServer } from "./agent/bridgeServer";
+import { AGENT_PROTOCOL_VERSION } from "./agent/bridgeProtocol";
 import { ReferenceCache } from "./cache/referenceCache";
 import { DartReferenceCodeLensProvider } from "./codelens/dartCodeLensProvider";
 import { getConfig } from "./core/config";
@@ -11,8 +14,9 @@ import { CallHierarchyResult, CallHierarchyService } from "./dart/callHierarchyS
 import { GitService } from "./git/gitService";
 import { SemanticService } from "./dart/semanticService";
 import { DartSymbolService } from "./dart/symbolService";
+import { assessDeleteSafety } from "./intelligence/safety";
 
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const logger = new Logger();
   const symbolService = new DartSymbolService();
   const referenceCache = new ReferenceCache<SemanticResult>();
@@ -32,7 +36,34 @@ export function activate(context: vscode.ExtensionContext): void {
     new GitService(),
     logger
   );
+  const bridge = new AgentBridgeServer();
   let refreshTimer: NodeJS.Timeout | undefined;
+
+  const workspaceId = (vscode.workspace.workspaceFolders ?? [])
+    .map((folder) => folder.uri.toString())
+    .sort()
+    .join("|");
+  if (workspaceId) {
+    try {
+      await bridge.start({
+        workspaceId,
+        extensionVersion: packageVersion(context.extension.packageJSON),
+        descriptorPath: path.join(context.globalStorageUri.fsPath, "agent-bridge.json"),
+        handler: (method) => {
+          if (method !== "health") throw new Error(`Unsupported bridge method: ${method}`);
+          return Promise.resolve({
+            status: "READY",
+            protocolVersion: AGENT_PROTOCOL_VERSION,
+            extensionVersion: packageVersion(context.extension.packageJSON),
+            dartExtensionActive: vscode.extensions.getExtension("Dart-Code.dart-code")?.isActive ?? false
+          });
+        }
+      });
+      logger.info("Local agent bridge started.");
+    } catch (error) {
+      logger.error("Local agent bridge failed to start", error);
+    }
+  }
 
   const clearCaches = (): void => {
     referenceCache.clear();
@@ -57,6 +88,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     logger,
     provider,
+    { dispose: () => void bridge.dispose() },
     vscode.languages.registerCodeLensProvider({ language: "dart", scheme: "file" }, provider),
     vscode.workspace.onDidChangeTextDocument((event) => {
       if (event.document.languageId === "dart") scheduleRefresh(event.document.uri);
@@ -113,6 +145,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("flutterReference.showCallees", showLocations),
     vscode.commands.registerCommand("flutterReference.analyzeChangeImpact", async () => {
       await analyzeChangeImpact(logger);
+    }),
+    vscode.commands.registerCommand("flutterReference.analyzeDeleteSafety", async () => {
+      await analyzeDeleteSafety(logger);
+    }),
+    vscode.commands.registerCommand("flutterReference.copyAiContext", async () => {
+      await copyAiContext(logger);
     }),
     vscode.commands.registerCommand("flutterReference.showDependencyGraph", async () => {
       await showDependencyGraph(context, hierarchy, logger);
@@ -185,6 +223,165 @@ async function analyzeChangeImpact(logger: Logger): Promise<void> {
     await vscode.window.showErrorMessage(
       "Flutter Reference could not analyze this symbol. See the Output panel for details."
     );
+  }
+}
+
+interface ActiveSymbolEvidence {
+  readonly name: string;
+  readonly kind: string;
+  readonly relativeFile: string;
+  readonly line: number;
+  readonly column: number;
+  readonly references: readonly vscode.Location[];
+  readonly implementations: readonly vscode.Location[];
+  readonly complete: boolean;
+  readonly frameworkSignals: readonly string[];
+}
+
+async function collectActiveSymbolEvidence(): Promise<ActiveSymbolEvidence | undefined> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.languageId !== "dart") return undefined;
+  const position = editor.selection.active;
+  const range = editor.document.getWordRangeAtPosition(position);
+  const name = range ? editor.document.getText(range) : "unknown";
+  const lineText = editor.document.lineAt(position.line).text;
+  const frameworkSignals = [
+    /@pragma\s*\(\s*['"]vm:entry-point['"]/.test(lineText) ? "@pragma(vm:entry-point)" : undefined,
+    /\b(build|initState|dispose|didChangeDependencies|didUpdateWidget)\b/.test(name) ? "Flutter lifecycle" : undefined,
+    /MethodChannel|setMethodCallHandler/.test(lineText) ? "MethodChannel callback" : undefined
+  ].filter((item): item is string => item !== undefined);
+
+  try {
+    const [rawReferences, rawImplementations, hover] = await Promise.all([
+      vscode.commands.executeCommand<Array<vscode.Location | vscode.LocationLink>>(
+        "vscode.executeReferenceProvider",
+        editor.document.uri,
+        position
+      ),
+      vscode.commands.executeCommand<Array<vscode.Location | vscode.LocationLink>>(
+        "vscode.executeImplementationProvider",
+        editor.document.uri,
+        position
+      ),
+      vscode.commands.executeCommand<readonly vscode.Hover[]>(
+        "vscode.executeHoverProvider",
+        editor.document.uri,
+        position
+      )
+    ]);
+    return {
+      name,
+      kind: hover?.length ? "Dart symbol" : "unknown symbol",
+      relativeFile: vscode.workspace.asRelativePath(editor.document.uri),
+      line: position.line + 1,
+      column: position.character + 1,
+      references: normalizeLocations(rawReferences ?? []).filter(
+        (location) => !isAtPosition(location, editor.document.uri, position)
+      ),
+      implementations: normalizeLocations(rawImplementations ?? []),
+      complete: rawReferences !== undefined && rawImplementations !== undefined,
+      frameworkSignals
+    };
+  } catch {
+    return {
+      name,
+      kind: "unknown symbol",
+      relativeFile: vscode.workspace.asRelativePath(editor.document.uri),
+      line: position.line + 1,
+      column: position.character + 1,
+      references: [],
+      implementations: [],
+      complete: false,
+      frameworkSignals
+    };
+  }
+}
+
+async function analyzeDeleteSafety(logger: Logger): Promise<void> {
+  try {
+    const symbol = await collectActiveSymbolEvidence();
+    if (!symbol) {
+      await vscode.window.showInformationMessage("Open a Dart file and place the cursor on a symbol first.");
+      return;
+    }
+    const summary = summarizeImpact(symbol.references, symbol.implementations);
+    const result = assessDeleteSafety({
+      semanticReferences: symbol.references.length,
+      implementations: symbol.implementations.length,
+      overrides: 0,
+      testReferences: summary.tests,
+      generatedReferences: summary.generated,
+      publicApi: !symbol.name.startsWith("_"),
+      frameworkSignals: symbol.frameworkSignals,
+      complete: symbol.complete
+    });
+    const report = [
+      "# Delete Safety Analysis",
+      "",
+      `Symbol: \`${symbol.name}\``,
+      `Location: \`${symbol.relativeFile}:${symbol.line}:${symbol.column}\``,
+      `Risk: **${result.risk}**`,
+      `Recommendation: \`${result.recommendation}\``,
+      "",
+      "## Evidence",
+      "",
+      `- Semantic references: ${result.evidence.semanticReferences}`,
+      `- Implementations: ${result.evidence.implementations}`,
+      `- Test references: ${result.evidence.testReferences}`,
+      `- Generated references: ${result.evidence.generatedReferences}`,
+      `- Public API: ${result.evidence.publicApi ? "Yes" : "No"}`,
+      `- Evidence complete: ${result.evidence.complete ? "Yes" : "No"}`,
+      "",
+      "## Reasons",
+      "",
+      ...(result.reasons.length
+        ? result.reasons.map((reason) => `- ${reason}`)
+        : ["- No conclusive reason available."]),
+      ...(result.warnings.length ? ["", "## Warnings", "", ...result.warnings.map((warning) => `- ${warning}`)] : []),
+      "",
+      "> LOW means candidate for review, not automatic permission to delete. External consumers and dynamic framework wiring may be invisible."
+    ].join("\n");
+    const document = await vscode.workspace.openTextDocument({ language: "markdown", content: report });
+    await vscode.window.showTextDocument(document, { preview: true });
+  } catch (error) {
+    logger.error("Delete-safety analysis failed", error);
+    await vscode.window.showErrorMessage("Flutter Reference could not analyze delete safety.");
+  }
+}
+
+async function copyAiContext(logger: Logger): Promise<void> {
+  try {
+    const symbol = await collectActiveSymbolEvidence();
+    if (!symbol) {
+      await vscode.window.showInformationMessage("Open a Dart file and place the cursor on a symbol first.");
+      return;
+    }
+    const summary = summarizeImpact(symbol.references, symbol.implementations);
+    const relatedTests = [
+      ...new Set(
+        symbol.references
+          .filter((item) => /(?:^|\/)(?:test|integration_test)\//.test(item.uri.path))
+          .map((item) => vscode.workspace.asRelativePath(item.uri))
+      )
+    ].sort();
+    const context = [
+      "Flutter Reference semantic context",
+      `Symbol: ${symbol.name}`,
+      `Location: ${symbol.relativeFile}:${symbol.line}:${symbol.column}`,
+      `Semantic references: ${symbol.references.length}`,
+      `Implementations/overrides: ${symbol.implementations.length}`,
+      `Affected files: ${summary.files}`,
+      `Affected modules: ${summary.modules.join(", ") || "none detected"}`,
+      `Related tests: ${relatedTests.join(", ") || "none detected"}`,
+      `Generated references: ${summary.generated}`,
+      `Evidence complete: ${symbol.complete ? "yes" : "no"}`,
+      "Safety note: zero semantic references does not by itself prove code is safe to delete."
+    ].join("\n");
+    await vscode.env.clipboard.writeText(context);
+    void vscode.window.showInformationMessage("Flutter Reference AI context copied to clipboard.");
+  } catch (error) {
+    logger.error("Copy AI context failed", error);
+    await vscode.window.showErrorMessage("Flutter Reference could not copy AI context.");
   }
 }
 

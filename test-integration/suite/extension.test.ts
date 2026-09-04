@@ -86,6 +86,39 @@ describe("Flutter Reference extension", () => {
     const cachedDuration = performance.now() - cachedStart;
     assert.ok(cachedDuration < 5_000, `Cached resolution exceeded 5s: ${cachedDuration.toFixed(0)}ms.`);
   });
+
+  it("copies structured semantic context for AI agents", async () => {
+    const uri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, "lib", "reference_fixture.dart");
+    const document = await vscode.workspace.openTextDocument(uri);
+    const editor = await vscode.window.showTextDocument(document);
+    const declaration = document.getText().indexOf("String topLevel(");
+    const offset = declaration < 0 ? -1 : declaration + "String ".length;
+    assert.ok(offset >= 0);
+    editor.selection = new vscode.Selection(document.positionAt(offset), document.positionAt(offset));
+
+    await vscode.commands.executeCommand("flutterReference.copyAiContext");
+    const context = await vscode.env.clipboard.readText();
+    assert.match(context, /Symbol: topLevel/);
+    assert.match(context, /Semantic references: 2/);
+    assert.match(context, /Evidence complete: yes/);
+  });
+
+  it("produces an evidence-based delete-safety report", async () => {
+    const uri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, "lib", "reference_fixture.dart");
+    const document = await vscode.workspace.openTextDocument(uri);
+    const editor = await vscode.window.showTextDocument(document);
+    const declaration = document.getText().indexOf("String topLevel(");
+    const offset = declaration < 0 ? -1 : declaration + "String ".length;
+    assert.ok(offset >= 0);
+    editor.selection = new vscode.Selection(document.positionAt(offset), document.positionAt(offset));
+
+    await vscode.commands.executeCommand("flutterReference.analyzeDeleteSafety");
+    const report = vscode.window.activeTextEditor?.document;
+    assert.equal(report?.languageId, "markdown");
+    assert.match(report?.getText() ?? "", /# Delete Safety Analysis/);
+    assert.match(report?.getText() ?? "", /Risk: \*\*HIGH\*\*/);
+    assert.match(report?.getText() ?? "", /Public API: Yes/);
+  });
 });
 
 function flattenSymbols(symbols: readonly vscode.DocumentSymbol[]): vscode.DocumentSymbol[] {

@@ -15,6 +15,7 @@ tsconfig.eslint.json
 tsconfig.integration.json
 vitest.config.ts
 flutter-reference-roadmap.md
+flutter-reference-roadmap-v2.md
 package-lock.json
 .gitignore
 dist/**/*.map
